@@ -21,11 +21,8 @@ SOFTWARE.
  */
 package com.invirgance.divirgance.jdbc;
 
-import com.invirgance.convirgance.ConvirganceException;
-import com.invirgance.convirgance.input.BSONInput;
-import com.invirgance.convirgance.json.JSONObject;
-import com.invirgance.convirgance.source.InputStreamSource;
-import com.invirgance.convirgance.transform.IdentityTransformer;
+import com.invirgance.divirgance.io.BinaryInput;
+import com.invirgance.divirgance.io.IdentityTransformer;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -778,9 +775,7 @@ public class DivirganceDatabaseMetadata implements DatabaseMetaData
     {
         InputStream in;
         DataOutputStream out;
-        BSONInput input;
-        
-        Iterable<JSONObject> iterable;
+        Iterable<DivirganceRecord> iterable;
         
         // TODO: Allow filtering of tables
         
@@ -788,21 +783,19 @@ public class DivirganceDatabaseMetadata implements DatabaseMetaData
         {
             in = socket.getInputStream();
             out = new DataOutputStream(socket.getOutputStream());
-            input = new BSONInput();
+            iterable = new BinaryInput(in);
             
             out.write(COMMAND_LIST);
             out.write(SUB_COMMAND_TABLES);
             out.writeUTF(catalog);
             
             if(in.read() != RESPONSE_BSON) throw new SQLException("Unknown error while requesting tables list");
-            
-            iterable = input.read(new InputStreamSource(new NoCloseInputStream(in)));
-            
+                        
             iterable = new IdentityTransformer() {
                 @Override
-                public JSONObject transform(JSONObject record) throws ConvirganceException
+                public DivirganceRecord transform(DivirganceRecord record) throws SQLException
                 {
-                    JSONObject result = new JSONObject(true);
+                    DivirganceRecord result = new DivirganceRecord(true);
                     
                     result.put("TABLE_CAT", catalog);
                     result.put("TABLE_SCHEM", null);
@@ -821,7 +814,7 @@ public class DivirganceDatabaseMetadata implements DatabaseMetaData
             
             return new DivirganceResultSet(iterable.iterator());
         }
-        catch(IOException | ConvirganceException e)
+        catch(IOException e)
         {
             throw new SQLException(e);
         }
@@ -838,28 +831,24 @@ public class DivirganceDatabaseMetadata implements DatabaseMetaData
     {
         InputStream in;
         DataOutputStream out;
-        BSONInput input;
-        
-        Iterable<JSONObject> iterable;
+        Iterable<DivirganceRecord> iterable;
         
         try
         {
             in = socket.getInputStream();
             out = new DataOutputStream(socket.getOutputStream());
-            input = new BSONInput();
+            iterable = new BinaryInput(in);
             
             out.write(COMMAND_LIST);
             out.write(SUB_COMMAND_DATABASES);
             
             if(in.read() != RESPONSE_BSON) throw new SQLException("Unknown error while requesting catalog list");
             
-            iterable = input.read(new InputStreamSource(new NoCloseInputStream(in)));
-            
             iterable = new IdentityTransformer() {
                 @Override
-                public JSONObject transform(JSONObject record) throws ConvirganceException
+                public DivirganceRecord transform(DivirganceRecord record) throws SQLException
                 {
-                    JSONObject result = new JSONObject(true);
+                    DivirganceRecord result = new DivirganceRecord(true);
                     
                     result.put("TABLE_CAT", record.get("name"));
                     
@@ -869,7 +858,7 @@ public class DivirganceDatabaseMetadata implements DatabaseMetaData
             
             return new DivirganceResultSet(iterable.iterator());
         }
-        catch(IOException | ConvirganceException e)
+        catch(IOException | SQLException e)
         {
             throw new SQLException(e);
         }

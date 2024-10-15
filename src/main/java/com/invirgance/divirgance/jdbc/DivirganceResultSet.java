@@ -21,7 +21,6 @@ SOFTWARE.
  */
 package com.invirgance.divirgance.jdbc;
 
-import com.invirgance.convirgance.json.JSONObject;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -37,10 +36,10 @@ import java.util.Map;
  */
 public class DivirganceResultSet implements ResultSet
 {
-    private Iterator<JSONObject> iterator;
-    private JSONObject record;
+    private Iterator<DivirganceRecord> iterator;
+    private DivirganceRecord record;
     
-    public DivirganceResultSet(Iterator<JSONObject> iterator)
+    public DivirganceResultSet(Iterator<DivirganceRecord> iterator)
     {
         this.iterator = iterator;
     }
